@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.env
+*.sqlite3
+__marimo__/
+
+# Temporary walkthrough-render outputs
+*.render.mp4
+src/hypothesis_lab/ui/frontend/media/render.log
