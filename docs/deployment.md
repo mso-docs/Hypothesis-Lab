@@ -18,11 +18,11 @@ Review navigation, themes, source links, disabled actions, video playback/captio
 
 ## GitHub Pages
 
-The manually triggered `.github/workflows/pages.yml` builds and deploys only `dist/pages` using GitHub's Pages artifact/deployment actions. It does not run on pushes. After approving the design:
+The `.github/workflows/pages.yml` workflow runs on every push to `main`, checks the static preview, and builds and deploys only `dist/pages` using GitHub's Pages artifact/deployment actions. To enable it:
 
 1. Push the reviewed repository, keeping `.env`, local databases, and personal research out of Git.
 2. Set **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-3. Run **Actions → Publish static preview → Run workflow**.
+3. Push changes to `main` to deploy automatically. To rebuild without a new commit, use **Actions → Publish static preview → Run workflow**.
 4. Check the deployment URL and browser-test the published preview.
 
 GitHub Pages hosts static HTML/CSS/JavaScript; it does not run this application's Python backend. [GitHub Pages documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages).
@@ -39,4 +39,4 @@ A public server's localhost refers to that server, not the visitor's computer. T
 
 Never include `.env`, API keys, local SQLite databases, private notes, caches, or arbitrary workspace files in a published artifact. Only the builder's `dist/pages` output belongs in the static deployment. The full application keeps `OPENALEX_API_KEY` in the local Python process.
 
-No site has been published by preparing this workflow. Publication waits for design approval and an explicit manual workflow run.
+Once this workflow is pushed to `main` and Pages is configured, future pushes publish automatically. Pull requests and pushes to other branches do not deploy the preview.

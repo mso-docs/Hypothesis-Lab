@@ -104,7 +104,7 @@ uv run python scripts/build_static_demo.py --repository https://github.com/OWNER
 python -m http.server 8000 --directory dist/pages
 ```
 
-After reviewing the design, select **GitHub Settings → Pages → Source: GitHub Actions**, then manually run **Publish static preview** in Actions. The workflow uploads only `dist/pages`. See [deployment notes](docs/deployment.md).
+Select **GitHub Settings → Pages → Source: GitHub Actions**. Every push to `main` automatically runs **Publish static preview**, checks the static preview, and deploys `dist/pages`. Manual rebuilds remain available through **Actions → Publish static preview → Run workflow**. See [deployment notes](docs/deployment.md).
 
 ## Optional local-model analysis
 

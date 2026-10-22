@@ -1,6 +1,8 @@
 name: Publish static preview
-# Run manually after reviewing and approving the design.
+# Publish updates automatically; manual rebuilds remain available.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
