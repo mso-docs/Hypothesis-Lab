@@ -2,6 +2,10 @@
 
 import importlib.util
 import json
+import shutil
+import subprocess
+
+import pytest
 from pathlib import Path
 
 
@@ -31,3 +35,25 @@ def test_static_build_is_allowlisted_and_subpath_safe(tmp_path, monkeypatch):
         assert guide[key].startswith("./media/")
         assert (tmp_path / guide[key]).is_file()
     assert "marimo run app.py" in (tmp_path / "run-locally.html").read_text()
+
+
+def test_shipped_static_entry_point_starts(tmp_path):
+    if not shutil.which("node"):
+        pytest.skip("Node.js is required for static entry-point verification")
+    root = Path(__file__).resolve().parents[1]
+    spec = importlib.util.spec_from_file_location(
+        "static_builder", root / "scripts/build_static_demo.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    module.build(
+        tmp_path / "project-subpath", "https://github.com/example/hypothesis-lab"
+    )
+    subprocess.run(
+        [
+            "node",
+            str(root / "scripts/check-static.mjs"),
+            str(tmp_path / "project-subpath"),
+        ],
+        check=True,
+    )

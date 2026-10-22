@@ -59,7 +59,8 @@ def build(output: Path, repository: str):
     )
     (output / "guide.json").write_text(json.dumps(guide))
     (output / ".nojekyll").touch()
-    (output / "preview.mjs").write_text("""import {render} from "./workspace.mjs";
+    (output / "preview.mjs").write_text("""async function boot() {
+const {default: {render}} = await import("./workspace.mjs");
 const [data, guide] = await Promise.all(["demo.json", "guide.json"].map(p => fetch(new URL(p, import.meta.url)).then(r => {if (!r.ok) throw Error("Preview assets unavailable"); return r.json()})));
 const state = {data, guide, fullscreen: false};
 const listeners = new Map();
@@ -79,6 +80,13 @@ function freeze() {
 // Observe newly navigated documents; state remains the curated snapshot.
 new MutationObserver(freeze).observe(root,{childList:true,subtree:true});
 render({model,el:root}); freeze();
+}
+export const ready = boot().catch(error => {
+  console.error("Preview startup failed", error);
+  const root = document.getElementById("workspace");
+  root.textContent = "The demo could not load. Refresh the page or use Run locally above. If this persists, the site may need to be redeployed.";
+  root.setAttribute("role", "alert");
+});
 """)
     (output / "index.html").write_text(
         """<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hypothesis Lab · Demo preview</title><link rel="stylesheet" href="./workspace.css"><style>body{margin:0;background:#18181b;color:#e5e3ed;font:14px system-ui}.preview-bar{padding:12px 20px;display:flex;gap:18px;align-items:center;border-bottom:1px solid #393440;flex-wrap:wrap}.preview-bar span{flex:1;color:#aaa5b9}.preview-bar a{color:#c1a2ff}#workspace>.hl-app{height:calc(100dvh - 63px);min-height:600px}.hl-status{display:none}</style><header class="preview-bar"><strong>Hypothesis Lab / Preview</strong><span>Read-only demo · real literature · synthetic observations. Explore files, Help, and the walkthrough.</span><a href="./run-locally.html">Run locally →</a></header><div id="workspace"><p>Loading demo preview…</p></div><script type="module" src="./preview.mjs"></script></html>"""
