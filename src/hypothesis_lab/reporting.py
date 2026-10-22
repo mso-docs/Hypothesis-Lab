@@ -34,6 +34,14 @@ def markdown(payload):
         else "Numerical analysis pending. No posterior has been calculated.\n"
         + "\n".join(payload.get("missing_setup", []))
     )
+    draft = payload.get("interpretation")
+    interpretation = (
+        f"Model: {draft.get('model')} · Researcher review required · "
+        f"{'STALE: investigation changed' if draft.get('stale') else 'Snapshot matches investigation'}\n\n"
+        + draft.get("text", "")
+        if draft
+        else "No model interpretation requested."
+    )
     return f"""# Hypothesis Lab investigation
 
 {payload["hypothesis"]}
@@ -48,6 +56,9 @@ Generated: {payload["created_at"]}
 
 ## Research notes
 {payload.get("notes", "")}
+
+## Optional local-model interpretation
+{interpretation}
 
 ## Limitations
 {payload["limitations"]}

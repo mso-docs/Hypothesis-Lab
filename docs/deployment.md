@@ -1,69 +1,42 @@
-# Public demo deployment
+# Public static preview and full local application
 
-Deployment waits for approval of the redesigned interface. Nothing in this document creates a hosted site, account, or public link.
+The submission site is a **read-only static preview**, not a hosted scientific backend. It reuses the application frontend with allowlisted bundled demo findings. Visitors can explore files, sources and citations, themes, Help, methodology, and the captioned walkthrough. **Run locally** links to the repository, source ZIP, documentation, and launch instructions.
 
-## Recommended route
+Editing, new investigations, calculations, live OpenAlex search, SQLite persistence, report exports, and Ollama interpretation belong to the local Marimo app. The preview disables those controls and labels its synthetic observations. It requires no Python browser runtime, API credentials, database, or inference server.
 
-Keep the full application local for research, credentials, and SQLite storage. Prepare a separate, sanitized Marimo WebAssembly demo for a GitHub Pages submission link. The public demo should open the same curated investigation, allow changing inference parameters and starting an empty investigation, and offer JSON/Markdown downloads. Label its observations synthetic and identify its real literature sources independently.
-
-Marimo supports interactive browser execution through Pyodide and static hosting on GitHub Pages. This preserves the Python scientific engine instead of duplicating Bayesian calculations in JavaScript. See [Marimo WebAssembly](https://docs.marimo.io/guides/wasm/).
-
-| Route | Suitable behavior | Required adaptation |
-| --- | --- | --- |
-| Local Marimo | Full research workflow, live OpenAlex, local saves | Load the local environment before server-side retrieval |
-| GitHub Pages / static Vercel | Interactive, curated demo with browser Python | Bundle package/assets, remove secrets, adapt saving and retrieval |
-| Vercel companion frontend + HTTP API | Live public search with a private server-side key | Separate bounded HTTP endpoints, quota controls, deliberate storage policy |
-| Persistent Python server | Full hosted Marimo application | A host supporting the app's session lifecycle and WebSocket transport |
-
-## Static export preparation
-
-The installed Marimo version at this review was **0.25.2**. Its actual `marimo export html-wasm --help` supports `--mode run`, `--no-show-code`, `--no-execute`, directory exports, and `--offline`. These flags do not establish that this application already works in a browser.
-
-After creating a browser-compatible entry point, the intended build is:
+## Build and review
 
 ```bash
-uv run marimo export html-wasm demo_app.py \
-  --mode run --no-show-code --no-execute -o dist/demo
-python -m http.server 8000 --directory dist/demo
+uv sync --locked
+uv run python scripts/build_static_demo.py --repository https://github.com/OWNER/REPOSITORY
+python -m http.server 8000 --directory dist/pages
 ```
 
-`demo_app.py` is a proposed entry point, not an existing file. Do not publish an export of the full local application without the checks below. `--no-execute` avoids capturing local outputs during this build; source code remains public even with `--no-show-code`.
+The builder writes only an explicit demo snapshot, calculated demo curves, frontend modules/styles, media assets, a preview adapter, and static install documentation. It does not enumerate or export saved investigations. Paths are relative so a GitHub project subpath works. Build outputs are ignored by Git.
 
-A directory export is preferable here: package code, styles, and the curated source snapshot need explicit inclusion and verification. Current Marimo documents local-module bundling, configured Python paths for modules outside the notebook directory, and local wheels; single-file exports do not include all these resources. Ensure the `src/hypothesis_lab` package resolves during export. Keep non-code assets in the expected exported asset location, rather than relying on local filesystem paths. See [Marimo export documentation](https://docs.marimo.io/guides/exporting/webassembly_html/).
+Review navigation, themes, source links, disabled actions, video playback/captions/chapter seeking, responsive layout, and Run locally links in a browser before publication. Automated runtime checks do not establish visual browser compatibility.
 
-Compatibility work before publishing:
+## GitHub Pages
 
-- Confirm the exact NumPy, SciPy, Pydantic, AnyWidget, and HTTPX dependencies install under the export's Pyodide runtime. Compiled dependencies need compatible wheels; desktop installation alone proves nothing about browser support.
-- Replace server filesystem assumptions with bundled assets. Browser SQLite, if available, does not automatically persist to the user's local project directory. Use explicit downloads initially, or a tested browser-storage adapter with clear persistence behavior.
-- Use the curated literature snapshot for the public first-run demo. Browser network access is subject to CORS and cannot conceal application credentials. A live search button requires a separate protected backend or an explicitly designed user-owned-key workflow.
-- Verify startup, all workspace views, calculations, new-investigation behavior, light/dark appearance, exports, refresh behavior, and a GitHub project subpath in a real browser. Loading indicators must explain the initial Python/runtime download.
+The manually triggered `.github/workflows/pages.yml` builds and deploys only `dist/pages` using GitHub's Pages artifact/deployment actions. It does not run on pushes. After approving the design:
 
-Do not label the export validated until these browser checks pass.
+1. Push the reviewed repository, keeping `.env`, local databases, and personal research out of Git.
+2. Set **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+3. Run **Actions → Publish static preview → Run workflow**.
+4. Check the deployment URL and browser-test the published preview.
 
-## Vercel boundaries
+GitHub Pages hosts static HTML/CSS/JavaScript; it does not run this application's Python backend. [GitHub Pages documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages).
 
-A static WASM directory can be hosted on Vercel as well as Pages. A Vercel Function is a request handler, not a drop-in replacement for a persistent Marimo session server. The existing `marimo run app.py` process should not simply be placed inside a function. Review current [Vercel runtime documentation](https://vercel.com/docs/functions/runtimes/python) and [platform limits](https://vercel.com/docs/limits) before implementing the companion API.
+## Vercel
 
-A companion API can reuse the Python retrieval/inference package for bounded HTTP requests while the frontend handles navigation. It must keep the OpenAlex key server-side, validate input, restrict result size, rate-limit public use, and avoid exposing raw provider request URLs or errors containing credentials. Local SQLite files are not a durable multiuser database for a serverless service. Keep the submission demo anonymous and ephemeral unless a separate persistence design is implemented.
+The same `dist/pages` directory can be deployed as a static Vercel project with no runtime backend. Build it before upload, or configure the Python/uv build environment explicitly. Do not point Vercel at `marimo run app.py` as a function entry point.
 
-## Credential and research-data boundary
+A future full hosted version requires a deliberate backend deployment and durable storage strategy. Vercel now documents WebSocket support in public beta, with pinned instances, reconnect behavior and maximum connection durations. That makes old blanket claims that Vercel cannot support WebSockets outdated; it does not establish compatibility with this app's Marimo session lifecycle. See [Vercel WebSocket guidance](https://vercel.com/kb/guide/do-vercel-serverless-functions-support-websocket-connections) and [Python runtime](https://vercel.com/docs/functions/runtimes/python).
 
-`OPENALEX_API_KEY` belongs only in the local process environment or a hosting platform's server-side secret settings. Never put it in HTML, browser Python, JavaScript, public build variables, notebook outputs, exported snapshots, or committed `.env` files. A build-time environment variable becomes public if code embeds it into generated files.
+A public server's localhost refers to that server, not the visitor's computer. The local Ollama integration is available when users run the repository. It is deliberately unavailable in the public preview.
 
-Publish only an allowlisted demo snapshot containing citation metadata, source URLs, reviewed excerpts, synthetic observations, and explanatory notes. Do not upload the local SQLite database, personal notes, `.env`, caches, logs, or arbitrary workspace directories. Review the export directory and repository changes before publishing. No API key is needed to view the curated demo.
+## Credentials and publication
 
-## Approval checkpoint
+Never include `.env`, API keys, local SQLite databases, private notes, caches, or arbitrary workspace files in a published artifact. Only the builder's `dist/pages` output belongs in the static deployment. The full application keeps `OPENALEX_API_KEY` in the local Python process.
 
-Once the design is approved, build and browser-test the sanitized artifact locally. Present its limitations and chosen host, then publish the reviewed artifact using the user's authorized repository/account. The submitted link should identify whether users are running the browser demo or the full local research application.
-
-## Custom frontend packaging
-
-The redesigned workspace uses an AnyWidget bridge in `ui/widget.py`. Its ESM source is assembled from `ui/frontend/icons.js`, `charts.js`, and `workspace.js`; its stylesheet is `ui/frontend/workspace.css`. These files are runtime package assets, not optional development files. Wheel builds and browser exports must include all four files, plus curated demo data and any other paths read by Python.
-
-The current ESM bundler intentionally strips the known single-line local imports and named exports before concatenation, retaining the final default `render` export. Adding multiline imports, external JavaScript dependencies, duplicate top-level identifiers, or a second default export requires replacing or extending that bundler. Validate the assembled module with `node --check`, then test its rendering and widget synchronization in a browser. A JavaScript syntax check alone does not verify AnyWidget transport.
-
-A public WASM build must also install compatible `anywidget` and `traitlets` packages and verify bidirectional widget state, async retrieval failure behavior, and stylesheet loading. The local Python bridge currently invokes SQLite-backed services and reads frontend files at import time; those paths require an explicit browser storage/assets adaptation. Keep the server-only OpenAlex adapter out of browser credential flows. The custom frontend does not by itself make the full local app a static deployable app.
-
-## Getting-started media
-
-Include `ui/frontend/media/` (MP4, poster JPG, captions VTT, chapters VTT) and `tutorial.py` in the public demo package. The local AnyWidget serves these bundled assets as data URLs, without using the OpenAlex key or reading user investigations. Preserve native video controls, chapter seeking, the full transcript, and the practice-workspace action when adapting the public build. Verify media playback and caption loading against the deployed Content Security Policy in a real browser.
+No site has been published by preparing this workflow. Publication waits for design approval and an explicit manual workflow run.

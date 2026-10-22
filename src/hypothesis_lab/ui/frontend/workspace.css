@@ -253,6 +253,26 @@
   border-bottom: 1px solid var(--hl-border);
   color: var(--hl-muted);
   font-size: 11px;
+  line-height: 1;
+  overflow: hidden;
+}
+.hl-crumb > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.hl-crumb > span:first-child {
+  flex: 1;
+}
+.hl-crumb > span:last-child {
+  flex: 0 1 auto;
+  max-width: 40%;
+}
+.hl-crumb svg {
+  display: block;
 }
 .hl-document {
   flex: 1;

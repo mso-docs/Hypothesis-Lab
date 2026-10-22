@@ -258,6 +258,7 @@ export function render({ model, el }) {
               walkthrough: "Getting started",
               setup: "Starting assumptions",
               methodology: "Model methodology",
+              ollama: "Local models with Ollama",
             }[helpTopic],
           }
         : documents[page];
@@ -316,7 +317,7 @@ export function render({ model, el }) {
     if (!models.some((m) => m.name === selectedModel))
       selectedModel = models[0]?.name || "";
     const record = current.interpretation;
-    return `<section class="hl-panel hl-local-model"><div class="hl-panel-head"><h2>Interpret findings with Ollama</h2><span class="hl-tag">Optional · local model</span></div><p class="hl-note">Choose an installed model to review your question, notes, attached abstracts, and calculated findings. Abstracts are capped at 1,800 characters each and notes at 12,000. Drafts need researcher review; statistical results stay unchanged.</p><div class="hl-toolbar">${button("ollama-models", "Refresh local models", "activity", false, busy ? "disabled" : "")}<div class="hl-field"><label for="hl-ollama-model">Installed model</label><select id="hl-ollama-model" data-ollama-model ${busy ? "disabled" : ""}>${models.length ? models.map((m) => `<option value="${h(m.name)}" ${m.name === selectedModel ? "selected" : ""}>${h(m.name)}</option>`).join("") : '<option value="">Refresh to discover models</option>'}</select></div>${button("interpret", busy && pending === "interpret" ? "Generating interpretation…" : "Analyze findings", "activity", true, !busy && selectedModel ? "" : "disabled")}</div><details data-detail="ollama-help"><summary>Set up Ollama</summary><p class="hl-note">Run the app and Ollama on the same computer. Start Ollama with <code>ollama serve</code>, install your preferred model with <code>ollama pull MODEL</code>, then refresh. Only installed local models are listed. For local-only operation, disable Ollama cloud features. No automatic cloud fallback. A hosted demo cannot use this local connection.</p></details>${record ? `<div class="hl-divider"></div><div class="hl-panel-head"><h3>Interpretation draft</h3><span class="hl-tag">Researcher review required</span></div><p class="hl-note">${h(record.model)} · ${h(record.created_at)}${server.interpretation_stale || dirty ? " · Investigation changed — regenerate before relying on this draft" : ""}</p><div class="hl-markdown">${markdownPreview(record.text)}</div><details data-detail="ollama-context"><summary>Inspect the material sent to the model</summary><pre class="hl-code">${h(JSON.stringify(record.context, null, 2))}</pre></details>` : ""}</section>`;
+    return `<section class="hl-panel hl-local-model"><div class="hl-panel-head"><h2>Interpret findings with Ollama</h2><span class="hl-tag">Optional · local model</span></div><p class="hl-note">Choose an installed model to review your question, notes, attached abstracts, and calculated findings. Abstracts are capped at 1,800 characters each and notes at 12,000. Drafts need researcher review; statistical results stay unchanged.</p><div class="hl-toolbar">${button("ollama-models", "Refresh local models", "activity", false, busy ? "disabled" : "")}<div class="hl-field"><label for="hl-ollama-model">Installed model</label><select id="hl-ollama-model" data-ollama-model ${busy ? "disabled" : ""}>${models.length ? models.map((m) => `<option value="${h(m.name)}" ${m.name === selectedModel ? "selected" : ""}>${h(m.name)}</option>`).join("") : '<option value="">Refresh to discover models</option>'}</select></div>${button("interpret", busy && pending === "interpret" ? "Generating interpretation…" : "Analyze findings", "activity", true, !busy && selectedModel ? "" : "disabled")}</div><details data-detail="ollama-help"><summary>Set up Ollama</summary><p class="hl-note">Run the app and Ollama on the same computer. Start Ollama with <code>ollama serve</code>, install your preferred model with <code>ollama pull MODEL</code>, then refresh. Only installed local models are listed. For local-only operation, disable Ollama cloud features. No automatic cloud fallback. A hosted demo cannot use this local connection.</p></details>${record ? `<div class="hl-divider"></div><div class="hl-panel-head"><h3>Interpretation draft</h3><span class="hl-tag">Researcher review required</span></div><p class="hl-note">${h(record.model)} · ${h(record.created_at)}${server.interpretation_stale || revision > sentRevision ? " · Investigation changed — regenerate before relying on this draft" : ""}</p><div class="hl-markdown">${markdownPreview(record.text)}</div><details data-detail="ollama-context"><summary>Inspect the material sent to the model</summary><pre class="hl-code">${h(JSON.stringify(record.context, null, 2))}</pre></details>` : ""}</section>`;
   }
   function analysisDocument() {
     const a = activeAnalysis();
@@ -357,6 +358,7 @@ export function render({ model, el }) {
       walkthrough: "Video walkthrough",
       setup: "Starting assumptions",
       methodology: "Model methodology",
+      ollama: "Local models with Ollama",
     };
     const nav = `<nav class="hl-help-nav" aria-label="Help documentation">${Object.entries(
       topics,
@@ -366,6 +368,11 @@ export function render({ model, el }) {
           `<button class="hl-button${helpTopic === key ? " hl-help-active" : ""}" data-action="help:${key}" ${helpTopic === key ? 'aria-current="page"' : ""}>${h(title)}</button>`,
       )
       .join("")}</nav>`;
+    if (helpTopic === "ollama")
+      return (
+        nav +
+        `<div class="hl-markdown"><h2>Interpret findings with your local model</h2><p>Install Ollama on the same computer as Hypothesis Lab. Download your preferred chat model using <code>ollama pull MODEL</code>, then start Ollama or run <code>ollama serve</code>.</p><h3>Choose and run a model</h3><p>Open Analysis, choose Refresh local models, select an installed model, and choose Analyze findings. Loading a model can take time. If it times out, try a smaller model or retry after loading completes.</p><h3>Material supplied</h3><p>The model receives your question, event definition, sampling notes, notes capped at 12,000 characters, up to 50 attached source abstracts capped at 1,800 characters each, annotations, assumptions, and calculated findings. It does not read full papers or other investigations. Inspect the exact input snapshot below each draft.</p><h3>Review and save</h3><p>Drafts cite sources by [S1], [S2], and so on. Check references and conclusions. Interpretations do not change statistical results. Save to retain the latest draft; exports preserve the model identity and snapshot. Changes mark the draft stale.</p><h3>Local connection</h3><p>The default endpoint is http://127.0.0.1:11434. Configure another loopback HTTP port with HYPOTHESIS_OLLAMA_URL. Known cloud entries are excluded, and there is no cloud fallback. Disable cloud features in Ollama for local-only operation. This feature requires the locally running application and is unavailable in the public preview.</p>${button("page:analysis", "Open analysis", "activity")}</div>`
+      );
     if (helpTopic === "walkthrough") return nav + walkthroughDocument();
     if (helpTopic === "methodology") return nav + methodologyDocument();
     if (helpTopic === "setup")
@@ -387,6 +394,12 @@ export function render({ model, el }) {
           "activity",
           "Starting assumptions",
           "What to do when you have no prior information or no observations.",
+        ],
+        [
+          "ollama",
+          "terminal",
+          "Local models with Ollama",
+          "Choose your own installed model and review a draft interpretation.",
         ],
         [
           "methodology",
@@ -441,6 +454,7 @@ export function render({ model, el }) {
             ["walkthrough", "Video walkthrough"],
             ["setup", "Starting assumptions"],
             ["methodology", "Model methodology"],
+            ["ollama", "Local models with Ollama"],
           ]
             .map(
               ([key, title]) =>
@@ -481,6 +495,7 @@ export function render({ model, el }) {
           ["walkthrough", "Video walkthrough"],
           ["setup", "Starting assumptions"],
           ["methodology", "Model methodology"],
+          ["ollama", "Local models with Ollama"],
         ].map(([key, title]) => ({
           action: `help:${key}`,
           label: `Help: ${title}`,
@@ -546,7 +561,11 @@ export function render({ model, el }) {
     }
     if (action.startsWith("help:")) {
       const topic = action.slice(5);
-      if (!["overview", "walkthrough", "setup", "methodology"].includes(topic))
+      if (
+        !["overview", "walkthrough", "setup", "methodology", "ollama"].includes(
+          topic,
+        )
+      )
         return;
       navigate("help");
       helpTopic = topic;
@@ -715,7 +734,7 @@ export function render({ model, el }) {
     const scroll = preserve
       ? el.querySelector(".hl-document")?.scrollTop || 0
       : 0;
-    el.innerHTML = `<div class="hl-app${model.get("fullscreen") ? " hl-fullscreen" : ""}${showInspector ? " show-inspector" : ""}${showExplorer ? " show-explorer" : ""}${hideInspector || page === "help" ? " hide-inspector" : ""}${hideExplorer ? " hide-explorer" : ""}" data-theme="${h(theme)}"><header class="hl-titlebar"><div class="hl-brand">${icon("flask", 19)} Hypothesis Lab <small>Scientific research workspace</small></div><div class="hl-toolbar"><button class="hl-command-trigger" data-action="command">${icon("search", 13)}<span>Search files & actions</span><kbd>⌘ K</kbd></button>${tool("theme", theme === "dark" ? "Switch to light theme" : "Switch to dark theme", theme === "dark" ? "sun" : "moon")}${page === "help" ? "" : tool("inspector", "Toggle inspector", "panelRight")}${button("save", current.is_demo ? "Save a copy" : "Save", "save", false, busy ? "disabled" : "")}</div></header><div class="hl-body"><nav class="hl-rail" aria-label="Workspace tools">${tool("explorer", "Toggle file explorer", "files", showExplorer)}${tool("page:sources", "Find literature", "search", page === "sources")}${tool("page:graph", "Source graph", "graph", page === "graph")}${tool("command", "Command palette", "command")}${tool("help:overview", "Help & documentation", "help", page === "help")}</nav><aside class="hl-explorer" aria-label="Investigation explorer">${explorer()}</aside><main class="hl-workbench"><nav class="hl-tabs" aria-label="Open documents" role="tablist">${openTabs.map((route) => `<button class="hl-tab${page === route ? " hl-active" : ""}" data-action="page:${route}" role="tab" aria-selected="${page === route}">${icon(documents[route].icon, 13)}${h(documents[route].file)}${dirty && route === "question" ? '<span class="hl-unsaved-dot" aria-label="Unsaved changes">●</span>' : ""}</button>`).join("")}</nav><div class="hl-crumb"><span>${h(page === "help" ? "Help & docs" : current.is_demo ? "demo" : "investigations")} ${icon("chevronRight", 11)} ${h(page === "help" ? { overview: "Overview", walkthrough: "getting-started.md", setup: "starting-assumptions.md", methodology: "methodology.md" }[helpTopic] : documents[page].file)}</span><span>${busy ? '<span class="hl-spinner"></span> Working…' : dirty ? "Unsaved changes" : current.is_demo ? "Bundled starter" : "Local workspace"}</span></div><div class="hl-document">${!dialog && (localError || server.error) ? `<div class="hl-banner hl-error" role="alert">${icon("info")} ${h(localError || server.error)}</div>` : ""}${documentContent()}</div></main><aside class="hl-inspector" aria-label="Context inspector">${["sources", "evidence", "graph"].includes(page) ? sourceInspector() : modelInspector()}</aside></div><footer class="hl-status"><span><span class="hl-connected">●</span> Python runtime <span class="hl-status-separator">│</span>${icon("gitBranch", 12)} ${current.is_demo ? "demo" : "local"} <span data-dirty-status>${busy ? "Working…" : dirty ? "Unsaved changes" : "Ready"}</span></span><span>${current.publications.length} sources · ${current.evidence.length} excerpts <span class="hl-status-separator">│</span> ${server.openalex_configured ? "OpenAlex configured" : "Offline demo ready"} <span class="hl-status-separator">│</span> UTF-8 · Markdown</span></footer>${toast ? `<div class="hl-toast" role="status">${h(toast)}</div>` : ""}${modal()}</div>`;
+    el.innerHTML = `<div class="hl-app${model.get("fullscreen") ? " hl-fullscreen" : ""}${showInspector ? " show-inspector" : ""}${showExplorer ? " show-explorer" : ""}${hideInspector || page === "help" ? " hide-inspector" : ""}${hideExplorer ? " hide-explorer" : ""}" data-theme="${h(theme)}"><header class="hl-titlebar"><div class="hl-brand">${icon("flask", 19)} Hypothesis Lab <small>Scientific research workspace</small></div><div class="hl-toolbar"><button class="hl-command-trigger" data-action="command">${icon("search", 13)}<span>Search files & actions</span><kbd>⌘ K</kbd></button>${tool("theme", theme === "dark" ? "Switch to light theme" : "Switch to dark theme", theme === "dark" ? "sun" : "moon")}${page === "help" ? "" : tool("inspector", "Toggle inspector", "panelRight")}${button("save", current.is_demo ? "Save a copy" : "Save", "save", false, busy ? "disabled" : "")}</div></header><div class="hl-body"><nav class="hl-rail" aria-label="Workspace tools">${tool("explorer", "Toggle file explorer", "files", showExplorer)}${tool("page:sources", "Find literature", "search", page === "sources")}${tool("page:graph", "Source graph", "graph", page === "graph")}${tool("command", "Command palette", "command")}${tool("help:overview", "Help & documentation", "help", page === "help")}</nav><aside class="hl-explorer" aria-label="Investigation explorer">${explorer()}</aside><main class="hl-workbench"><nav class="hl-tabs" aria-label="Open documents" role="tablist">${openTabs.map((route) => `<button class="hl-tab${page === route ? " hl-active" : ""}" data-action="page:${route}" role="tab" aria-selected="${page === route}">${icon(documents[route].icon, 13)}${h(documents[route].file)}${dirty && route === "question" ? '<span class="hl-unsaved-dot" aria-label="Unsaved changes">●</span>' : ""}</button>`).join("")}</nav><div class="hl-crumb"><span>${h(page === "help" ? "Help & docs" : current.is_demo ? "demo" : "investigations")} ${icon("chevronRight", 11)} ${h(page === "help" ? { overview: "Overview", walkthrough: "getting-started.md", setup: "starting-assumptions.md", methodology: "methodology.md", ollama: "local-models.md" }[helpTopic] : documents[page].file)}</span><span>${busy ? '<span class="hl-spinner"></span> Working…' : dirty ? "Unsaved changes" : current.is_demo ? "Bundled starter" : "Local workspace"}</span></div><div class="hl-document">${!dialog && (localError || server.error) ? `<div class="hl-banner hl-error" role="alert">${icon("info")} ${h(localError || server.error)}</div>` : ""}${documentContent()}</div></main><aside class="hl-inspector" aria-label="Context inspector">${["sources", "evidence", "graph"].includes(page) ? sourceInspector() : modelInspector()}</aside></div><footer class="hl-status"><span><span class="hl-connected">●</span> Python runtime <span class="hl-status-separator">│</span>${icon("gitBranch", 12)} ${current.is_demo ? "demo" : "local"} <span data-dirty-status>${busy ? "Working…" : dirty ? "Unsaved changes" : "Ready"}</span></span><span>${current.publications.length} sources · ${current.evidence.length} excerpts <span class="hl-status-separator">│</span> ${server.openalex_configured ? "OpenAlex configured" : "Offline demo ready"} <span class="hl-status-separator">│</span> UTF-8 · Markdown</span></footer>${toast ? `<div class="hl-toast" role="status">${h(toast)}</div>` : ""}${modal()}</div>`;
     for (const detail of el.querySelectorAll("details[data-detail]")) {
       detail.open = expandedDetails.has(detail.dataset.detail);
     }

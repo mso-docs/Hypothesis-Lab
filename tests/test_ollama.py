@@ -88,5 +88,30 @@ def test_literature_only_context_does_not_claim_calculated_findings():
     workspace["setup"]["data_mode"] = "literature_only"
     context = context_for(workspace, analyze(workspace))
     assert context["numerical_result"]["ready"] is False
+    assert context["numerical_result"]["mean"] is None
+    assert context["numerical_result"]["successes"] == 0
     assert "interpretation" not in context
     assert context["sources"][0]["citation"] == "S1"
+
+
+def test_timeout_and_empty_generation_are_actionable():
+    def timeout(request):
+        raise httpx.ReadTimeout("sensitive", request=request)
+
+    with pytest.raises(ValueError, match="timed out"):
+        asyncio.run(Ollama(httpx.MockTransport(timeout)).models())
+
+    def empty(request):
+        return httpx.Response(
+            200,
+            json={"models": [{"name": "local", "size": 100}]}
+            if request.url.path == "/api/tags"
+            else {"message": {"content": ""}},
+        )
+
+    with pytest.raises(ValueError, match="no interpretation"):
+        asyncio.run(
+            Ollama(httpx.MockTransport(empty)).interpret(
+                "local", starter(), analyze(starter())
+            )
+        )

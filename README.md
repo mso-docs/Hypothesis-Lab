@@ -27,6 +27,10 @@ The first launch opens a guided extreme-heat investigation. Follow the five-step
 
 ## Video walkthrough and help
 
+[![Watch the Hypothesis Lab walkthrough on YouTube](https://img.youtube.com/vi/Hx3EiLiQf28/hqdefault.jpg)](https://youtu.be/Hx3EiLiQf28)
+
+**[Watch the walkthrough on YouTube →](https://youtu.be/Hx3EiLiQf28)**
+
 The question-mark tool opens **Help & docs**. The video, starting-assumptions guide, and methodology are nested there and share one Help tab. Choose **Watch getting started** below **New investigation** to jump directly to the video. The bundled 2:02 illustrated video has chapter seeking, captions, a full transcript, and an offline **Load practice example** action. It follows a separate radish-seed hypothesis from setup to source review, modeling, notes, and export. The example uses a real linked paper and explicitly synthetic observations.
 
 See [the written walkthrough](docs/getting-started.md) for the complete steps and video rebuild instructions. The original climate demo and existing saved investigations remain separate.
@@ -89,7 +93,20 @@ The frontend checks exercise all eight document views, appearance, pane toggles,
 
 ## Public submission link
 
-Publication waits for design approval. [Deployment notes](docs/deployment.md) describe a sanitized interactive GitHub Pages / static Vercel demo using browser Python, and the server-side changes needed for public live search. The local Marimo server is not a Vercel serverless function. No deployment has been performed.
+A read-only static preview can be hosted on GitHub Pages or static Vercel. It uses the same interface, bundled literature and synthetic results, Help, themes, and walkthrough. A **Run locally** page links visitors to the repository and installation instructions for the full experience. No deployment has been performed.
+
+Build locally (replace the repository URL):
+
+```bash
+uv run python scripts/build_static_demo.py --repository https://github.com/OWNER/REPOSITORY
+python -m http.server 8000 --directory dist/pages
+```
+
+After reviewing the design, select **GitHub Settings → Pages → Source: GitHub Actions**, then manually run **Publish static preview** in Actions. The workflow uploads only `dist/pages`. See [deployment notes](docs/deployment.md).
+
+## Optional local-model analysis
+
+Use **Analysis → Interpret findings with Ollama** to discover installed models and generate a reviewable interpretation. Run Ollama alongside the local Marimo app, refresh models, select yours, and choose **Analyze findings**. Statistical calculations remain deterministic. Drafts preserve their model and input snapshot, travel with saved investigations and exports, and are flagged when findings change. See [local-model setup and boundaries](docs/local-models.md).
 
 ## Next scientific extensions
 

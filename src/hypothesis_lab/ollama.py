@@ -48,14 +48,21 @@ def context_for(workspace: dict, analysis: dict) -> dict:
         "sampling": workspace.get("sampling_description", "")[:5000],
         "notes": workspace.get("notes", "")[:12000],
         "assumptions": analysis.get("assumption_summary"),
+        "prior": analysis.get("prior"),
+        "prior_sensitivity": analysis.get("sensitivity")
+        if analysis.get("ready")
+        else None,
         "synthetic": workspace.get("synthetic", False),
         "numerical_result": {
             key: analysis.get(key)
+            if analysis.get("ready")
+            or key in {"ready", "missing_setup", "trials", "successes"}
+            else None
             for key in (
                 "ready",
                 "missing_setup",
                 "trials",
-                "events",
+                "successes",
                 "alpha",
                 "beta",
                 "mean",
@@ -85,7 +92,8 @@ def context_for(workspace: dict, analysis: dict) -> dict:
 
 
 def fingerprint(context: dict) -> str:
-    return hashlib.sha256(json.dumps(context, sort_keys=True).encode()).hexdigest()
+    canonical = json.loads(json.dumps(context), parse_int=float)
+    return hashlib.sha256(json.dumps(canonical, sort_keys=True).encode()).hexdigest()
 
 
 class Ollama:

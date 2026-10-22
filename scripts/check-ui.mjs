@@ -196,7 +196,38 @@ click("page:sources");
 click("inspect:0");
 assert(!el.innerHTML.includes(" hide-inspector"));
 
+click("page:analysis");
+assert(el.innerHTML.includes("Interpret findings with Ollama"));
+click("ollama-models");
+assert.equal(request.type, "ollama_models");
+data = {
+  ...data,
+  error: "",
+  ollama_models: [{ name: "research:latest", digest: "abc" }],
+};
+receiver();
+assert(el.innerHTML.includes("research:latest"));
+click("interpret");
+assert.equal(request.type, "interpret");
+assert.equal(request.model, "research:latest");
+data = {
+  ...data,
+  workspace: {
+    ...data.workspace,
+    interpretation: {
+      model: "research:latest",
+      created_at: "today",
+      text: "<script>unsafe()</script>",
+      context: {},
+      input_hash: "abc",
+    },
+  },
+  interpretation_stale: true,
+};
+receiver();
+assert(!el.innerHTML.includes("<script>unsafe()"));
+assert(el.innerHTML.includes("regenerate before relying"));
 dispose();
 console.log(
-  "Frontend runtime checks passed: 8 workspace/help views, nested docs, guided setup, video help, theme, pane toggles, dialogs, safe text/links, editing & request bridge.",
+  "Frontend runtime checks passed: 8 workspace/help views, nested docs, guided setup, Ollama discovery/interpretation, video help, theme, pane toggles, dialogs, safe text/links, editing & request bridge.",
 );
