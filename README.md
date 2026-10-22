@@ -2,6 +2,8 @@
 
 A local scientific research IDE built with Python and Marimo. An Obsidian-inspired workspace connects a research question, real linked publications, reviewable evidence, explicit Bayesian models, and reproducible reports.
 
+**[View our OSI Hackathon 2026 entry →](https://scientificintelligence.org/campaigns/osi-hackathon-2026/submissions/168)**
+
 ## Run
 
 ```bash
