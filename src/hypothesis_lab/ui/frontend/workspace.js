@@ -417,6 +417,14 @@ export function render({ model, el }) {
   }
 
   function documentContent() {
+    if (!page)
+      return empty(
+        "files",
+        "No open documents",
+        "Choose a file from the Explorer to continue. Closing a tab keeps your investigation and unsaved edits.",
+        "question",
+        "Open hypothesis",
+      );
     return (
       pageHeader() +
       {
@@ -546,6 +554,19 @@ export function render({ model, el }) {
     action();
   }
   function perform(action) {
+    if (action.startsWith("close-tab:")) {
+      const route = action.slice(10);
+      const index = openTabs.indexOf(route);
+      if (index < 0) return;
+      openTabs.splice(index, 1);
+      if (page === route) page = openTabs[Math.max(0, index - 1)] || null;
+      draw(false);
+      queueMicrotask(() =>
+        el.querySelector(`[data-action="page:${page}"]`)?.focus(),
+      );
+      return;
+    }
+
     if (action === "ollama-models") {
       send("ollama_models");
       return;
@@ -652,6 +673,7 @@ export function render({ model, el }) {
       requestSwitch(() => {
         dialog = "";
         page = "question";
+        if (!openTabs.includes("question")) openTabs.push("question");
         send("tutorial");
       });
       return;
@@ -660,6 +682,7 @@ export function render({ model, el }) {
       requestSwitch(() => {
         dialog = "";
         page = "question";
+        if (!openTabs.includes("question")) openTabs.push("question");
         send("demo");
       });
       return;
@@ -679,6 +702,7 @@ export function render({ model, el }) {
       requestSwitch(() => {
         dialog = "";
         page = "question";
+        if (!openTabs.includes("question")) openTabs.push("question");
         send("load", { title });
       });
       return;
@@ -734,7 +758,7 @@ export function render({ model, el }) {
     const scroll = preserve
       ? el.querySelector(".hl-document")?.scrollTop || 0
       : 0;
-    el.innerHTML = `<div class="hl-app${model.get("fullscreen") ? " hl-fullscreen" : ""}${showInspector ? " show-inspector" : ""}${showExplorer ? " show-explorer" : ""}${hideInspector || page === "help" ? " hide-inspector" : ""}${hideExplorer ? " hide-explorer" : ""}" data-theme="${h(theme)}"><header class="hl-titlebar"><div class="hl-brand">${icon("flask", 19)} Hypothesis Lab <small>Scientific research workspace</small></div><div class="hl-toolbar"><button class="hl-command-trigger" data-action="command">${icon("search", 13)}<span>Search files & actions</span><kbd>⌘ K</kbd></button>${tool("theme", theme === "dark" ? "Switch to light theme" : "Switch to dark theme", theme === "dark" ? "sun" : "moon")}${page === "help" ? "" : tool("inspector", "Toggle inspector", "panelRight")}${button("save", current.is_demo ? "Save a copy" : "Save", "save", false, busy ? "disabled" : "")}</div></header><div class="hl-body"><nav class="hl-rail" aria-label="Workspace tools">${tool("explorer", "Toggle file explorer", "files", showExplorer)}${tool("page:sources", "Find literature", "search", page === "sources")}${tool("page:graph", "Source graph", "graph", page === "graph")}${tool("command", "Command palette", "command")}${tool("help:overview", "Help & documentation", "help", page === "help")}</nav><aside class="hl-explorer" aria-label="Investigation explorer">${explorer()}</aside><main class="hl-workbench"><nav class="hl-tabs" aria-label="Open documents" role="tablist">${openTabs.map((route) => `<button class="hl-tab${page === route ? " hl-active" : ""}" data-action="page:${route}" role="tab" aria-selected="${page === route}">${icon(documents[route].icon, 13)}${h(documents[route].file)}${dirty && route === "question" ? '<span class="hl-unsaved-dot" aria-label="Unsaved changes">●</span>' : ""}</button>`).join("")}</nav><div class="hl-crumb"><span>${h(page === "help" ? "Help & docs" : current.is_demo ? "demo" : "investigations")} ${icon("chevronRight", 11)} ${h(page === "help" ? { overview: "Overview", walkthrough: "getting-started.md", setup: "starting-assumptions.md", methodology: "methodology.md", ollama: "local-models.md" }[helpTopic] : documents[page].file)}</span><span>${busy ? '<span class="hl-spinner"></span> Working…' : dirty ? "Unsaved changes" : current.is_demo ? "Bundled starter" : "Local workspace"}</span></div><div class="hl-document">${!dialog && (localError || server.error) ? `<div class="hl-banner hl-error" role="alert">${icon("info")} ${h(localError || server.error)}</div>` : ""}${documentContent()}</div></main><aside class="hl-inspector" aria-label="Context inspector">${["sources", "evidence", "graph"].includes(page) ? sourceInspector() : modelInspector()}</aside></div><footer class="hl-status"><span><span class="hl-connected">●</span> Python runtime <span class="hl-status-separator">│</span>${icon("gitBranch", 12)} ${current.is_demo ? "demo" : "local"} <span data-dirty-status>${busy ? "Working…" : dirty ? "Unsaved changes" : "Ready"}</span></span><span>${current.publications.length} sources · ${current.evidence.length} excerpts <span class="hl-status-separator">│</span> ${server.openalex_configured ? "OpenAlex configured" : "Offline demo ready"} <span class="hl-status-separator">│</span> UTF-8 · Markdown</span></footer>${toast ? `<div class="hl-toast" role="status">${h(toast)}</div>` : ""}${modal()}</div>`;
+    el.innerHTML = `<div class="hl-app${model.get("fullscreen") ? " hl-fullscreen" : ""}${showInspector ? " show-inspector" : ""}${showExplorer ? " show-explorer" : ""}${hideInspector || !page || page === "help" ? " hide-inspector" : ""}${hideExplorer ? " hide-explorer" : ""}" data-theme="${h(theme)}"><header class="hl-titlebar"><div class="hl-brand">${icon("flask", 19)} Hypothesis Lab <small>Scientific research workspace</small></div><div class="hl-toolbar"><button class="hl-command-trigger" data-action="command">${icon("search", 13)}<span>Search files & actions</span><kbd>⌘ K</kbd></button>${tool("theme", theme === "dark" ? "Switch to light theme" : "Switch to dark theme", theme === "dark" ? "sun" : "moon")}${page === "help" ? "" : tool("inspector", "Toggle inspector", "panelRight")}${button("save", current.is_demo ? "Save a copy" : "Save", "save", false, busy ? "disabled" : "")}</div></header><div class="hl-body"><nav class="hl-rail" aria-label="Workspace tools">${tool("explorer", "Toggle file explorer", "files", showExplorer)}${tool("page:sources", "Find literature", "search", page === "sources")}${tool("page:graph", "Source graph", "graph", page === "graph")}${tool("command", "Command palette", "command")}${tool("help:overview", "Help & documentation", "help", page === "help")}</nav><aside class="hl-explorer" aria-label="Investigation explorer">${explorer()}</aside><main class="hl-workbench"><nav class="hl-tabs" aria-label="Open documents" role="tablist">${openTabs.map((route) => `<div class="hl-tab${page === route ? " hl-active" : ""}" role="presentation"><button class="hl-tab-open" data-action="page:${route}" role="tab" aria-selected="${page === route}">${icon(documents[route].icon, 13)}${h(documents[route].file)}${dirty && route === "question" ? '<span class="hl-unsaved-dot" aria-label="Unsaved changes">●</span>' : ""}</button><button class="hl-tab-close" data-action="close-tab:${route}" aria-label="Close ${h(documents[route].file)}" title="Close ${h(documents[route].file)}">${icon("close", 12)}</button></div>`).join("")}</nav><div class="hl-crumb"><span>${h(page === "help" ? "Help & docs" : current.is_demo ? "demo" : "investigations")} ${icon("chevronRight", 11)} ${h(page === "help" ? { overview: "Overview", walkthrough: "getting-started.md", setup: "starting-assumptions.md", methodology: "methodology.md", ollama: "local-models.md" }[helpTopic] : documents[page]?.file || "No open document")}</span><span>${busy ? '<span class="hl-spinner"></span> Working…' : dirty ? "Unsaved changes" : current.is_demo ? "Bundled starter" : "Local workspace"}</span></div><div class="hl-document">${!dialog && (localError || server.error) ? `<div class="hl-banner hl-error" role="alert">${icon("info")} ${h(localError || server.error)}</div>` : ""}${documentContent()}</div></main><aside class="hl-inspector" aria-label="Context inspector">${["sources", "evidence", "graph"].includes(page) ? sourceInspector() : modelInspector()}</aside></div><footer class="hl-status"><span><span class="hl-connected">●</span> Python runtime <span class="hl-status-separator">│</span>${icon("gitBranch", 12)} ${current.is_demo ? "demo" : "local"} <span data-dirty-status>${busy ? "Working…" : dirty ? "Unsaved changes" : "Ready"}</span></span><span>${current.publications.length} sources · ${current.evidence.length} excerpts <span class="hl-status-separator">│</span> ${server.openalex_configured ? "OpenAlex configured" : "Offline demo ready"} <span class="hl-status-separator">│</span> UTF-8 · Markdown</span></footer>${toast ? `<div class="hl-toast" role="status">${h(toast)}</div>` : ""}${modal()}</div>`;
     for (const detail of el.querySelectorAll("details[data-detail]")) {
       detail.open = expandedDetails.has(detail.dataset.detail);
     }
@@ -954,6 +978,7 @@ export function render({ model, el }) {
         const title = String(values.get("title") || "");
         requestSwitch(() => {
           page = "question";
+          if (!openTabs.includes("question")) openTabs.push("question");
           send("new", { title });
         });
       }

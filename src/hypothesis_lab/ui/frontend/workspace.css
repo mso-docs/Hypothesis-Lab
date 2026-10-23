@@ -226,16 +226,46 @@
 .hl-tab {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 0;
   background: transparent;
   border: 0;
   border-right: 1px solid var(--hl-border);
   border-top: 2px solid transparent;
   color: var(--hl-muted);
-  padding: 0 16px;
+  padding: 0;
   white-space: nowrap;
   font-size: 12px !important;
   min-width: 120px;
+  flex-shrink: 0;
+}
+.hl-tab-open {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  height: 100%;
+  padding: 0 10px 0 16px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  white-space: nowrap;
+}
+.hl-tab-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--hl-muted);
+}
+.hl-tab-close:hover {
+  background: var(--hl-elevated);
+  color: var(--hl-text);
 }
 .hl-tab.hl-active {
   background: var(--hl-editor);

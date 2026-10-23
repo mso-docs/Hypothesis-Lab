@@ -17,7 +17,7 @@ For notebook development: `uv run marimo edit app.py`. App mode uses the full vi
 
 ## The workspace
 
-- **Explorer:** actual investigation files; selecting a file opens a document tab.
+- **Explorer:** actual investigation files; selecting a file opens a document tab. Close tabs with their × button; reopen them from the Explorer. Closing tabs preserves unsaved edits.
 - **Command palette:** `Ctrl/Cmd K` to jump to files or actions.
 - **Context inspector:** source provenance alongside literature and a read-only analysis summary. Set up the model in the central guided flow. Both panes can be collapsed.
 - **Save:** `Ctrl/Cmd S`, or the toolbar action. Named investigations are stored locally in SQLite.

@@ -227,6 +227,29 @@ data = {
 receiver();
 assert(!el.innerHTML.includes("<script>unsafe()"));
 assert(el.innerHTML.includes("regenerate before relying"));
+// Closing tabs preserves drafts, picks a neighbor, and supports an empty workbench.
+click("page:question");
+click("page:notes");
+click("close-tab:question");
+assert(!el.innerHTML.includes('data-action="close-tab:question"'));
+assert(el.innerHTML.includes("research-notes.md"));
+click("page:question");
+assert(el.innerHTML.includes("A newer corrected research question"));
+for (const route of [
+  "question",
+  "sources",
+  "analysis",
+  "help",
+  "notes",
+  "evidence",
+  "graph",
+  "report",
+])
+  click(`close-tab:${route}`);
+assert(el.innerHTML.includes("No open documents"));
+click("page:question");
+assert(el.innerHTML.includes('data-action="close-tab:question"'));
+assert(el.innerHTML.includes("A newer corrected research question"));
 dispose();
 console.log(
   "Frontend runtime checks passed: 8 workspace/help views, nested docs, guided setup, Ollama discovery/interpretation, video help, theme, pane toggles, dialogs, safe text/links, editing & request bridge.",
